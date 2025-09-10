@@ -24,11 +24,12 @@ const TherapyModule = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
-  const [duration, setDuration] = useState(600); // 10 minutes default
+  const [duration, setDuration] = useState(600); 
   const [timeRemaining, setTimeRemaining] = useState(600);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
+  const audioRef = useRef(null); 
 
   const therapyThemes = [
     {
@@ -165,6 +166,21 @@ const TherapyModule = () => {
       }
     };
   }, [currentTheme, isPlaying]);
+
+  // Handle audio playback
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    audioRef.current.volume = isMuted ? 0 : volume;
+
+    if (isPlaying) {
+      audioRef.current.play().catch(err => {
+        console.log("Audio play error:", err);
+      });
+    } else {
+      audioRef.current.pause();
+    }
+  }, [isPlaying, isMuted, volume, currentTheme]);
 
   // Animation functions
   const drawOceanWaves = (ctx, width, height, time) => {
@@ -318,6 +334,13 @@ const TherapyModule = () => {
           ref={canvasRef}
           className="absolute inset-0 w-full h-full"
           style={{ filter: 'blur(0.5px)' }}
+        />
+
+        {/* Audio */}
+        <audio
+          ref={audioRef}
+          src={currentTheme.soundUrl}
+          loop
         />
 
         {/* Controls Overlay */}
