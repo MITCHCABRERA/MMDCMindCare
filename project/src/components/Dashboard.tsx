@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Brain, 
@@ -27,11 +27,26 @@ const Dashboard = () => {
   const [currentMood, setCurrentMood] = useState('😊');
   const [dailyMoodSaved, setDailyMoodSaved] = useState(false);
 
+  // Monthly Reset
+  useEffect(() => {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${now.getMonth() + 1}`;
+    const lastReset = localStorage.getItem('last-reset-month');
+
+    if (lastReset !== currentMonth) {
+      localStorage.setItem('wellness-completed-sessions', JSON.stringify([]));
+      localStorage.setItem('journal-entries', JSON.stringify([]));
+      localStorage.setItem('mood-entries', JSON.stringify([]));
+      localStorage.setItem('sessions-completed', JSON.stringify([]));
+      localStorage.setItem('last-reset-month', currentMonth);
+    }
+  }, []);
+
   // Check if mood was already saved today
-  React.useEffect(() => {
+  useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
     const moodEntries = JSON.parse(localStorage.getItem('mood-entries') || '[]');
-    const todayEntry = moodEntries.find(entry => entry.date === today);
+    const todayEntry = moodEntries.find((entry: any) => entry.date === today);
     if (todayEntry) {
       setCurrentMood(todayEntry.mood);
       setDailyMoodSaved(true);
@@ -97,7 +112,7 @@ const Dashboard = () => {
     const moodValue = moodOptions.indexOf(currentMood) + 1;
     
     const moodEntries = JSON.parse(localStorage.getItem('mood-entries') || '[]');
-    const filteredEntries = moodEntries.filter(entry => entry.date !== today);
+    const filteredEntries = moodEntries.filter((entry: any) => entry.date !== today);
     
     const newEntry = {
       id: Date.now(),
@@ -107,10 +122,13 @@ const Dashboard = () => {
       note: 'Daily check-in from dashboard'
     };
     
-    const updatedEntries = [newEntry, ...filteredEntries].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const updatedEntries = [newEntry, ...filteredEntries].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
     localStorage.setItem('mood-entries', JSON.stringify(updatedEntries));
     setDailyMoodSaved(true);
   };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Navigation Header */}
@@ -122,7 +140,7 @@ const Dashboard = () => {
                 <Brain className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-800">MMCD MindCare</h1>
+                <h1 className="text-xl font-bold text-gray-800">MMDC MindCare</h1>
                 <p className="text-xs text-gray-500">Dashboard</p>
               </div>
             </div>
@@ -189,9 +207,13 @@ const Dashboard = () => {
                 </button>
               ))}
             </div>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 ml-4">
+            <button
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 ml-4"
+              onClick={handleSaveMood}
+              disabled={dailyMoodSaved}
+            >
               <CheckCircle className="w-4 h-4" />
-              <span onClick={handleSaveMood}>{dailyMoodSaved ? 'Saved' : 'Save'}</span>
+              <span>{dailyMoodSaved ? 'Saved' : 'Save'}</span>
             </button>
             {dailyMoodSaved && (
               <span className="text-green-600 text-sm ml-2">✓ Mood saved for today</span>
@@ -202,9 +224,9 @@ const Dashboard = () => {
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {[
-            { title: "Wellness Streak", value: `${JSON.parse(localStorage.getItem('wellness-completed-sessions') || '{}').length || 0} sessions`, icon: TrendingUp, color: "text-green-600" },
+            { title: "Wellness Streak", value: `${JSON.parse(localStorage.getItem('wellness-completed-sessions') || '[]').length} sessions`, icon: TrendingUp, color: "text-green-600" },
             { title: "Journal Entries", value: `${JSON.parse(localStorage.getItem('journal-entries') || '[]').length}`, icon: BookOpen, color: "text-blue-600" },
-            { title: "Sessions Completed", value: "12", icon: Activity, color: "text-purple-600" },
+            { title: "Sessions Completed", value: `${JSON.parse(localStorage.getItem('sessions-completed') || '[]').length}`, icon: Activity, color: "text-purple-600" },
             { title: "Mood Entries", value: `${JSON.parse(localStorage.getItem('mood-entries') || '[]').length}`, icon: Smile, color: "text-yellow-600" }
           ].map((stat, index) => (
             <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -250,7 +272,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Today's Recommendations */}
+            {/* Recommendations */}
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white">
               <h2 className="text-xl font-bold mb-4">Today's Personalized Recommendations</h2>
               <div className="space-y-3">
