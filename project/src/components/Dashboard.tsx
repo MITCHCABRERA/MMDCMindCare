@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Brain, 
@@ -18,8 +18,6 @@ import {
   BarChart3,
   Smile,
   Clock,
-  CheckCircle,
-  Star,
   X
 } from 'lucide-react';
 
@@ -27,22 +25,35 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentMood, setCurrentMood] = useState('😊');
-  const [dailyMoodSaved, setDailyMoodSaved] = useState(false);
-  const [selectedMoods, setSelectedMoods] = useState([]);
-  const [notifications, setNotifications] = useState([]);
+  const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // Check if mood was already saved today
-  React.useEffect(() => {
+  // 🔄 Monthly reset logic
+  useEffect(() => {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${now.getMonth() + 1}`;
+
+    const lastResetMonth = localStorage.getItem("last-reset-month");
+
+    if (lastResetMonth !== currentMonth) {
+      localStorage.setItem("wellness-completed-sessions", JSON.stringify([]));
+      localStorage.setItem("journal-entries", JSON.stringify([]));
+      localStorage.setItem("mood-entries", JSON.stringify([]));
+      localStorage.setItem("sessions-completed", JSON.stringify([]));
+      localStorage.setItem("last-reset-month", currentMonth);
+    }
+  }, []);
+
+  // ✅ Load initial data (mood + notifications)
+  useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
     const moodEntries = JSON.parse(localStorage.getItem('mood-entries') || '[]');
-    const todayEntry = moodEntries.find(entry => entry.date === today);
+    const todayEntry = moodEntries.find((entry: any) => entry.date === today);
     if (todayEntry) {
       setCurrentMood(todayEntry.mood);
-      setDailyMoodSaved(true);
     }
-    
-    // Load notifications
+
     const savedNotifications = JSON.parse(localStorage.getItem('user-notifications') || '[]');
     setNotifications(savedNotifications);
   }, []);
@@ -101,21 +112,13 @@ const Dashboard = () => {
 
   const moodOptions = ['😢', '😐', '😊', '😄', '🤗'];
 
-  const toggleMoodSelection = (mood) => {
-    setSelectedMoods(prev => 
-      prev.includes(mood) 
-        ? prev.filter(m => m !== mood)
-        : [...prev, mood]
-    );
-  };
-
-  const handleSaveMoods = (selectedMood) => {
+  const handleSaveMoods = (selectedMood: string) => {
     const today = new Date().toISOString().split('T')[0];
     const currentTime = new Date().toLocaleTimeString();
     const moodValue = moodOptions.indexOf(selectedMood) + 1;
-    
+
     const moodEntries = JSON.parse(localStorage.getItem('mood-entries') || '[]');
-    
+
     const newEntry = {
       id: Date.now(),
       date: today,
@@ -123,13 +126,16 @@ const Dashboard = () => {
       value: moodValue,
       note: `Quick mood check-in at ${currentTime}`
     };
-    
-    const updatedEntries = [newEntry, ...moodEntries].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const updatedEntries = [newEntry, ...moodEntries].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
     localStorage.setItem('mood-entries', JSON.stringify(updatedEntries));
-    
-    // Show success feedback
+
     alert(`Mood ${selectedMood} saved successfully!`);
+    setCurrentMood(selectedMood);
   };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Navigation Header */}
@@ -141,11 +147,11 @@ const Dashboard = () => {
                 <Brain className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-800">MMCD MindCare</h1>
+                <h1 className="text-xl font-bold text-gray-800">MMDC MindCare</h1>
                 <p className="text-xs text-gray-500">Dashboard</p>
               </div>
             </div>
-            
+
             {/* Search Bar */}
             <div className="flex-1 max-w-md mx-8">
               <div className="relative">
@@ -161,7 +167,7 @@ const Dashboard = () => {
             </div>
 
             <div className="flex items-center space-x-4">
-              <button 
+              <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors"
               >
@@ -208,19 +214,25 @@ const Dashboard = () => {
             ) : (
               <div className="space-y-3">
                 {notifications.map((notification) => (
-                  <div 
-                    key={notification.id} 
+                  <div
+                    key={notification.id}
                     className={`p-3 rounded-lg border ${
-                      notification.read ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'
+                      notification.read
+                        ? 'bg-gray-50 border-gray-200'
+                        : 'bg-blue-50 border-blue-200'
                     }`}
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <p className="font-medium text-sm text-gray-800">{notification.title}</p>
+                      <p className="font-medium text-sm text-gray-800">
+                        {notification.title}
+                      </p>
                       {!notification.read && (
                         <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-600 mb-2">{notification.message}</p>
+                    <p className="text-xs text-gray-600 mb-2">
+                      {notification.message}
+                    </p>
                     {notification.meetLink && (
                       <a
                         href={notification.meetLink}
@@ -266,9 +278,7 @@ const Dashboard = () => {
                 <button
                   key={index}
                   onClick={() => handleSaveMoods(mood)}
-                  className={`text-3xl p-2 rounded-lg transition-all ${
-                    'hover:bg-gray-100 hover:scale-110'
-                  }`}
+                  className="text-3xl p-2 rounded-lg hover:bg-gray-100 hover:scale-110 transition-all"
                 >
                   {mood}
                 </button>
@@ -276,19 +286,43 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="mt-3 text-sm text-gray-600">
-            Click any mood to save it instantly. You can add multiple mood entries throughout the day.
+            Click any mood to save it instantly. You can add multiple mood entries
+            throughout the day.
           </div>
         </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {[
-            { title: "Wellness Streak", value: `${JSON.parse(localStorage.getItem('wellness-completed-sessions') || '{}').length || 0} sessions`, icon: TrendingUp, color: "text-green-600" },
-            { title: "Journal Entries", value: `${JSON.parse(localStorage.getItem('journal-entries') || '[]').length}`, icon: BookOpen, color: "text-blue-600" },
-            { title: "Sessions Completed", value: "12", icon: Activity, color: "text-purple-600" },
-            { title: "Mood Entries", value: `${JSON.parse(localStorage.getItem('mood-entries') || '[]').length}`, icon: Smile, color: "text-yellow-600" }
+            {
+              title: "Wellness Streak",
+              value: `${JSON.parse(localStorage.getItem('wellness-completed-sessions') || '[]').length} sessions`,
+              icon: TrendingUp,
+              color: "text-green-600"
+            },
+            {
+              title: "Journal Entries",
+              value: `${JSON.parse(localStorage.getItem('journal-entries') || '[]').length}`,
+              icon: BookOpen,
+              color: "text-blue-600"
+            },
+            {
+              title: "Sessions Completed",
+              value: `${JSON.parse(localStorage.getItem('sessions-completed') || '[]').length}`,
+              icon: Activity,
+              color: "text-purple-600"
+            },
+            {
+              title: "Mood Entries",
+              value: `${JSON.parse(localStorage.getItem('mood-entries') || '[]').length}`,
+              icon: Smile,
+              color: "text-yellow-600"
+            }
           ].map((stat, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div
+              key={index}
+              className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
@@ -314,7 +348,9 @@ const Dashboard = () => {
                     className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-200 cursor-pointer group"
                   >
                     <div className="flex items-start space-x-4">
-                      <div className={`w-12 h-12 ${action.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
+                      <div
+                        className={`w-12 h-12 ${action.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}
+                      >
                         <action.icon className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1">
@@ -331,7 +367,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Today's Recommendations */}
+            {/* Recommendations */}
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white">
               <h2 className="text-xl font-bold mb-4">Today's Personalized Recommendations</h2>
               <div className="space-y-3">
@@ -359,7 +395,6 @@ const Dashboard = () => {
                 <Clock className="w-5 h-5 mr-2 text-gray-600" />
                 Recent Activity
               </h3>
-              
               <div className="space-y-4">
                 {recentActivity.map((activity, index) => (
                   <div key={index} className="flex items-start space-x-3">

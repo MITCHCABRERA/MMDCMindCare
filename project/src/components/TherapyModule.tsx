@@ -15,7 +15,8 @@ import {
   Zap,
   Heart,
   Timer,
-  Palette
+  Palette,
+  Feather
 } from 'lucide-react';
 
 const TherapyModule = () => {
@@ -24,7 +25,7 @@ const TherapyModule = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
-  const [duration, setDuration] = useState(600); // 10 minutes default
+  const [duration, setDuration] = useState(600); // default 10 minutes
   const [timeRemaining, setTimeRemaining] = useState(600);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const canvasRef = useRef(null);
@@ -40,7 +41,8 @@ const TherapyModule = () => {
       color: 'from-blue-400 to-blue-600',
       backgroundColor: 'from-blue-100 to-cyan-100',
       soundUrl: '/audio/ocean-waves.mp3',
-      category: 'Relaxation'
+      category: 'Relaxation',
+      duration: 600
     },
     {
       id: 'forest-rain',
@@ -50,7 +52,8 @@ const TherapyModule = () => {
       color: 'from-green-400 to-green-600',
       backgroundColor: 'from-green-100 to-emerald-100',
       soundUrl: '/audio/forest-rain.mp3',
-      category: 'Sleep'
+      category: 'Sleep',
+      duration: 600
     },
     {
       id: 'deep-meditation',
@@ -60,7 +63,8 @@ const TherapyModule = () => {
       color: 'from-purple-400 to-purple-600',
       backgroundColor: 'from-purple-100 to-indigo-100',
       soundUrl: '/audio/singing-bowls.mp3',
-      category: 'Meditation'
+      category: 'Meditation',
+      duration: 600
     },
     {
       id: 'focus-flow',
@@ -70,7 +74,8 @@ const TherapyModule = () => {
       color: 'from-orange-400 to-orange-600',
       backgroundColor: 'from-orange-100 to-yellow-100',
       soundUrl: '/audio/binaural-beats.mp3',
-      category: 'Focus'
+      category: 'Focus',
+      duration: 600
     },
     {
       id: 'sunset-calm',
@@ -80,7 +85,8 @@ const TherapyModule = () => {
       color: 'from-pink-400 to-orange-500',
       backgroundColor: 'from-pink-100 to-orange-100',
       soundUrl: '/audio/sunset-ambient.mp3',
-      category: 'Relaxation'
+      category: 'Relaxation',
+      duration: 600
     },
     {
       id: 'night-rest',
@@ -90,16 +96,31 @@ const TherapyModule = () => {
       color: 'from-indigo-500 to-purple-600',
       backgroundColor: 'from-indigo-100 to-purple-100',
       soundUrl: '/audio/night-sounds.mp3',
-      category: 'Sleep'
+      category: 'Sleep',
+      duration: 600
+    },
+    {
+      id: 'sample',
+      name: '10 seconds sample',
+      description: 'This is a 10 seconds audio sample',
+      icon: Feather,
+      color: 'from-teal-400 to-cyan-500',
+      backgroundColor: 'from-teal-100 to-cyan-100',
+      soundUrl: '/audio/10secsample.mp3',
+      category: 'Sample',
+      duration: 10
     }
   ];
 
-  const categories = ['All', 'Relaxation', 'Sleep', 'Meditation', 'Focus'];
+  const categories = ['All', 'Relaxation', 'Sleep', 'Meditation', 'Focus', 'Sample'];
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const filteredThemes = selectedCategory === 'All' 
-    ? therapyThemes 
-    : therapyThemes.filter(theme => theme.category === selectedCategory);
+  // Filter themes by category and duration (duration can be null for "All")
+  const filteredThemes = therapyThemes.filter(theme => {
+    const matchesCategory = selectedCategory === 'All' || theme.category === selectedCategory;
+    const matchesDuration = duration === null || theme.duration === duration;
+    return matchesCategory && matchesDuration;
+  });
 
   // Timer functionality
   useEffect(() => {
@@ -149,6 +170,8 @@ const TherapyModule = () => {
         drawSunsetGradient(ctx, canvas.width, canvas.height, time);
       } else if (currentTheme.id === 'night-rest') {
         drawStarField(ctx, canvas.width, canvas.height, time);
+      } else if (currentTheme.id === 'sample') {
+        drawFeatherPulse(ctx, canvas.width, canvas.height, time);
       }
 
       if (isPlaying) {
@@ -295,14 +318,51 @@ const TherapyModule = () => {
     ctx.globalAlpha = 1;
   };
 
+  const drawFeatherPulse = (ctx, width, height, time) => {
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, '#2DD4BF'); 
+    gradient.addColorStop(1, '#06B6D4');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    const featherCount = 12;
+    for (let i = 0; i < featherCount; i++) {
+      const xBase = (i * 150) % width;
+      const yBase = (i * 200) % height;
+
+      const y = ((time * 30 + yBase) % (height + 200)) - 100;  
+      const x = xBase + Math.sin(time * 0.5 + i) * 80;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(Math.sin(time + i) * 0.5);
+
+      // Feather body
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 40, 12, 0, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${0.25 + 0.25 * Math.sin(time * 2 + i)})`;
+      ctx.fill();
+
+      // Feather shaft
+      ctx.beginPath();
+      ctx.moveTo(-35, 0);
+      ctx.lineTo(35, 0);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+  };
+
   const startTherapy = (theme) => {
-    setCurrentTheme(theme);
-    setTimeRemaining(duration);
-    setIsPlaying(true);
-    setIsTimerActive(true);
-    
-    // Increment therapy session count
-    const currentCount = parseInt(localStorage.getItem('therapy-session-count') || '0');
+  setCurrentTheme(theme);
+  setTimeRemaining(theme.duration ? theme.duration : duration); 
+  setIsPlaying(true);
+  setIsTimerActive(true);
+  
+  // Increment therapy session count in localStorage
+  const currentCount = parseInt(localStorage.getItem('therapy-session-count') || '0', 10);
     localStorage.setItem('therapy-session-count', (currentCount + 1).toString());
   };
 
@@ -314,7 +374,7 @@ const TherapyModule = () => {
   const resetSession = () => {
     setIsPlaying(false);
     setIsTimerActive(false);
-    setTimeRemaining(duration);
+    setTimeRemaining(currentTheme?.duration ?? duration);
   };
 
   const exitTherapy = () => {
@@ -340,11 +400,11 @@ const TherapyModule = () => {
           style={{ filter: 'blur(0.5px)' }}
         />
 
-       {/* Audio */}
+        {/* Audio */}
         <audio
           ref={audioRef}
           src={currentTheme.soundUrl}
-          loop
+          loop={currentTheme.id !== 'sample'}
         />
 
         {/* Controls Overlay */}
@@ -485,14 +545,18 @@ const TherapyModule = () => {
                 <Timer className="w-5 h-5 text-gray-600" />
                 <span className="text-sm text-gray-600">Duration:</span>
                 <select
-                  value={duration}
-                  onChange={(e) => setDuration(parseInt(e.target.value))}
-                  className="border border-gray-200 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={duration === null ? "All" : duration}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setDuration(value === "All" ? null : Number(value));
+                  }}
                 >
-                  <option value={300}>5 minutes</option>
-                  <option value={600}>10 minutes</option>
-                  <option value={900}>15 minutes</option>
-                  <option value={1200}>20 minutes</option>
+                  <option value="All">All</option>
+                  <option value={10}>10 seconds</option> 
+                  <option value={300}>5 minutes</option> 
+                  <option value={600}>10 minutes</option> 
+                  <option value={900}>15 minutes</option> 
+                  <option value={1200}>20 minutes</option> 
                   <option value={1800}>30 minutes</option>
                 </select>
               </div>
@@ -541,7 +605,7 @@ const TherapyModule = () => {
                 
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-500">
-                    {formatTime(duration)} session
+                    {formatTime(theme.duration ? theme.duration : duration)} session
                   </div>
                   <button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-2 rounded-lg font-medium transition-all flex items-center space-x-2 group-hover:scale-105">
                     <Play className="w-4 h-4" />
