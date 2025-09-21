@@ -8,12 +8,15 @@ import Journal from './components/Journal';
 import Chatbot from './components/Chatbot';
 import TherapyModule from './components/TherapyModule';
 import Consultation from './components/Consultation';
-import DoctorLogin from './components/DoctorLogin';
+//import DoctorLogin from './components/DoctorLogin';
+
 import DoctorPanel from './components/DoctorPanel';
 import StudentPortal from './components/StudentPortal';
+import { AuthProvider } from './components/Auth/useAuth';
 
 function App() {
   return (
+    <AuthProvider>
     <Router>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <Routes>
@@ -25,12 +28,12 @@ function App() {
           <Route path="/chatbot" element={<Chatbot />} />
           <Route path="/therapy" element={<TherapyModule />} />
           <Route path="/consultation" element={<Consultation />} />
-          <Route path="/doctor-login" element={<DoctorLogin />} />
           <Route path="/doctor-panel" element={<DoctorPanel />} />
           <Route path="/student-portal" element={<StudentPortal />} />
         </Routes>
       </div>
     </Router>
+    </AuthProvider>
   );
 }
 

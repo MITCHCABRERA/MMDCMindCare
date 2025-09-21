@@ -1,32 +1,20 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
   Heart, 
   Brain, 
   Shield, 
-  Users, 
   BookOpen, 
   MessageCircle, 
   Calendar,
-  Search,
   Sparkles,
-  ArrowRight,
   Play,
   CheckCircle,
   Star
 } from 'lucide-react';
+import Login from './auth/Login/Login';  // ✅ unified login component
 
 const LandingPage = () => {
-  const navigate = useNavigate();
-  const [isSigningIn, setIsSigningIn] = useState(false);
-
-  const handleGoogleSignIn = async () => {
-    setIsSigningIn(true);
-    // Simulate Google OAuth process
-    setTimeout(() => {
-      navigate('/dashboard');
-    }, 2000);
-  };
+  const [showLogin, setShowLogin] = useState(false);
 
   const features = [
     {
@@ -75,6 +63,8 @@ const LandingPage = () => {
   ];
 
   return (
+    
+
     <div className="min-h-screen">
       {/* Navigation */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-blue-100 sticky top-0 z-50">
@@ -89,28 +79,12 @@ const LandingPage = () => {
                 <p className="text-xs text-gray-500">Mental Health Support</p>
               </div>
             </div>
+            {/* Login button opens modal */}
             <button
-              onClick={handleGoogleSignIn}
-              disabled={isSigningIn}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50"
+              onClick={() => setShowLogin(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm"
             >
-              {isSigningIn ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Signing In...</span>
-                </>
-              ) : (
-                <>
-                  <span>Sign in with MMDC Gmail</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-            <button
-              onClick={() => navigate('/doctor-login')}
-              className="bg-white text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors border border-gray-200 flex items-center space-x-2 shadow-sm"
-            >
-              <span>Doctor/Consultant Login</span>
+              Sign In
             </button>
           </div>
         </div>
@@ -133,11 +107,10 @@ const LandingPage = () => {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
               <button
-                onClick={handleGoogleSignIn}
+                onClick={() => setShowLogin(true)}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
               >
                 <span>Get Started Today</span>
-                <ArrowRight className="w-5 h-5" />
               </button>
               <button className="bg-white text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors border border-gray-200 flex items-center space-x-2 shadow-sm">
                 <Play className="w-5 h-5" />
@@ -296,11 +269,10 @@ const LandingPage = () => {
             Join hundreds of MMDC students who are already taking control of their mental health.
           </p>
           <button
-            onClick={handleGoogleSignIn}
+            onClick={() => setShowLogin(true)}
             className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors shadow-lg hover:shadow-xl flex items-center space-x-2 mx-auto"
           >
             <span>Sign Up with MMDC Gmail</span>
-            <ArrowRight className="w-5 h-5" />
           </button>
         </div>
       </section>
@@ -324,6 +296,13 @@ const LandingPage = () => {
           </div>
         </div>
       </footer>
+
+      {/* Modal Login UI */}
+      {showLogin && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Login isModal onClose={() => setShowLogin(false)} />
+        </div>
+      )}
     </div>
   );
 };

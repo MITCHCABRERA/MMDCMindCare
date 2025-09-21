@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from "../components/auth/useAuth";
 import { useNavigate } from 'react-router-dom';
 import { 
   Calendar, 
@@ -32,11 +33,11 @@ const DoctorPanel = () => {
 
   useEffect(() => {
     // Check if doctor is logged in
-    const doctorSession = localStorage.getItem('doctor-session');
-    if (!doctorSession) {
-      navigate('/doctor-login');
-      return;
-    }
+    //const doctorSession = localStorage.getItem('doctor-session');
+    //if (!doctorSession) {
+    //  navigate('/doctor-login');
+    //  return;
+    //}
 
     // Load bookings and notifications
     loadBookings();
@@ -121,9 +122,11 @@ const DoctorPanel = () => {
     setChatMessage('');
   };
 
+  const { logout } = useAuth();
+
   const handleLogout = () => {
-    localStorage.removeItem('doctor-session');
-    navigate('/doctor-login');
+    logout();         
+    navigate('/');    // go back to landing page
   };
 
   const getStatusColor = (status) => {
