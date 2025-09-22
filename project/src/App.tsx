@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
-import Dashboard from './components/Dashboard';
+import Dashboard from './components/dashboard/Dashboard';
 import WellnessModule from './components/WellnessModule';
 import MoodTracker from './components/MoodTracker';
 import Journal from './components/Journal';
@@ -12,7 +12,7 @@ import Consultation from './components/Consultation';
 
 import DoctorPanel from './components/DoctorPanel';
 import StudentPortal from './components/StudentPortal';
-import { AuthProvider } from './components/Auth/useAuth';
+import { AuthProvider } from './components/auth/useAuth';
 
 function App() {
   return (

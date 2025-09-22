@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import EmergencySupport from './EmergencySupport';
+import EmergencySupport from './dashboard/EmergencySupport';
 import { 
   ArrowLeft, 
   Calendar, 

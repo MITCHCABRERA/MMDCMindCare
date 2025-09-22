@@ -27,7 +27,7 @@ const Login: React.FC<LoginProps> = ({ onClose, isModal = false }) => {
               <Brain className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">MMCD MindCare</h1>
+              <h1 className="text-2xl font-bold text-gray-800">MMDC MindCare</h1>
               <p className="text-sm text-gray-500">Mental Health Support</p>
             </div>
           </div>

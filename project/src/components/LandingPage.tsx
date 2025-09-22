@@ -75,7 +75,7 @@ const LandingPage = () => {
                 <Brain className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-800">MMCD MindCare</h1>
+                <h1 className="text-xl font-bold text-gray-800">MMDC MindCare</h1>
                 <p className="text-xs text-gray-500">Mental Health Support</p>
               </div>
             </div>
@@ -286,12 +286,12 @@ const LandingPage = () => {
                 <Brain className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">MMCD MindCare</h3>
+                <h3 className="text-lg font-bold text-white">MMDC MindCare</h3>
                 <p className="text-gray-400 text-sm">Mental Health Support Platform</p>
               </div>
             </div>
             <div className="text-gray-400 text-sm">
-              © 2024 MMCD MindCare. All rights reserved. | Privacy Policy | Terms of Service
+              © 2024 MMDC MindCare. All rights reserved. | Privacy Policy | Terms of Service
             </div>
           </div>
         </div>
