@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { getLocalStorage, setLocalStorage } from "./utils/storage";
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -20,18 +21,20 @@ import {
 
 const WellnessModule = () => {
   const navigate = useNavigate();
-  const [currentSession, setCurrentSession] = useState(null);
+  const [currentSession, setCurrentSession] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
-  const [completedSessions, setCompletedSessions] = useState({});
+  const [completedSessions, setCompletedSessions] = useState<Record<string|number, number>>({});
+
+  // change: watch timer to count seconds while user stays in the session panel
+  const [watchSeconds, setWatchSeconds] = useState(0);
+  const watchIntervalRef = useRef<number | null>(null);
 
   // Load completed sessions from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('wellness-completed-sessions');
-    if (saved) {
-      setCompletedSessions(JSON.parse(saved));
-    }
+    const saved = getLocalStorage<Record<string|number, number>>('wellness-completed-sessions', {});
+    setCompletedSessions(saved);
   }, []);
 
   const wellnessPrograms = [
@@ -45,7 +48,7 @@ const WellnessModule = () => {
       icon: Wind,
       color: "bg-blue-500",
       rating: 4.8,
-      videoId: "YRPh_GaiL8s", // Breathing exercise video
+      videoId: "YRPh_GaiL8s",
       instructor: "Dr. Sarah Johnson"
     },
     {
@@ -58,7 +61,7 @@ const WellnessModule = () => {
       icon: Brain,
       color: "bg-purple-500",
       rating: 4.9,
-      videoId: "inpok4MKVLM", // Meditation video
+      videoId: "inpok4MKVLM",
       instructor: "Dr. Michael Chen"
     },
     {
@@ -71,7 +74,7 @@ const WellnessModule = () => {
       icon: Heart,
       color: "bg-pink-500",
       rating: 4.7,
-      videoId: "86HUcX8ZtAk", // Progressive muscle relaxation
+      videoId: "86HUcX8ZtAk",
       instructor: "Dr. Lisa Martinez"
     },
     {
@@ -84,7 +87,7 @@ const WellnessModule = () => {
       icon: Brain,
       color: "bg-green-500",
       rating: 4.6,
-      videoId: "ZToicYcHIOU", // Visualization meditation
+      videoId: "ZToicYcHIOU",
       instructor: "Dr. Amanda White"
     },
     {
@@ -97,7 +100,7 @@ const WellnessModule = () => {
       icon: Wind,
       color: "bg-orange-500",
       rating: 4.5,
-      videoId: "tybOi4hjZFQ", // Energizing breathing
+      videoId: "tybOi4hjZFQ",
       instructor: "Dr. James Wilson"
     },
     {
@@ -110,24 +113,55 @@ const WellnessModule = () => {
       icon: Heart,
       color: "bg-indigo-500",
       rating: 4.8,
-      videoId: "aXItOY0sLRY", // Sleep meditation
+      videoId: "aXItOY0sLRY",
       instructor: "Dr. Rachel Davis"
+    },
+    //test
+    {
+      id: 7,
+      title: "Countdown Test Video",
+      description: "Test session using the countdown video",
+      duration: "5 sec",
+      difficulty: "Beginner",
+      category: "Test",
+      icon: Clock,
+      color: "bg-gray-500",
+      rating: 5.0,
+      videoId: "icPHcK_cCF4",
+      instructor: "Test Instructor"
     }
   ];
 
-  const startSession = (program) => {
+  const startSession = (program: any) => {
     setCurrentSession(program);
     setProgress(0);
     setIsPlaying(true);
   };
 
-  const completeSession = (programId) => {
+  // change: small guard to avoid double-counting rapid clicks / duplicate handlers
+  const markOnceGuard = (key: string) => {
+    const marker = `wellness-${key}`;
+    if (localStorage.getItem(marker)) return false;
+    localStorage.setItem(marker, '1');
+    setTimeout(() => localStorage.removeItem(marker), 1000);
+    return true;
+  };
+
+  const completeSession = (programId: number | string) => {
+    if (!markOnceGuard(programId.toString())) return; // change: use guard
+
     const newCompleted = {
       ...completedSessions,
       [programId]: (completedSessions[programId] || 0) + 1
     };
     setCompletedSessions(newCompleted);
-    localStorage.setItem('wellness-completed-sessions', JSON.stringify(newCompleted));
+    setLocalStorage('wellness-completed-sessions', newCompleted);
+
+    // change: also record to global sessions-completed so QuickStats counts it
+    const sessions = getLocalStorage<string[]>('sessions-completed', []);
+    sessions.push(new Date().toISOString());
+    setLocalStorage('sessions-completed', sessions);
+
     setCurrentSession(null);
     setIsPlaying(false);
     setProgress(0);
@@ -141,6 +175,61 @@ const WellnessModule = () => {
     setProgress(0);
     setIsPlaying(false);
   };
+
+  // change: helper to parse session duration string into seconds
+  const getSessionDurationSeconds = (session: any) => {
+  if (!session || !session.duration) return 60;
+  const m = session.duration.match(/(\d+)\s*min/i);
+  if (m) return Number(m[1]) * 60;
+  const s = session.duration.match(/(\d+)\s*s(ec)?/i);
+  if (s) return Number(s[1]);
+  return 60; // default 60s
+};
+
+  // change: increment watchSeconds while panel visible & focused; auto-complete at threshold
+  useEffect(() => {
+  if (!currentSession) {
+    if (watchIntervalRef.current) clearInterval(watchIntervalRef.current);
+    setWatchSeconds(0);
+    return;
+  }
+
+  setWatchSeconds(0);
+  watchIntervalRef.current = window.setInterval(() => {
+    if (document.visibilityState !== 'visible') return;
+    if (!document.hasFocus()) return;
+
+    setWatchSeconds(prev => {
+       const dur = getSessionDurationSeconds(currentSession);
+        const threshold = Math.max(6, Math.floor(dur * 0.95));
+
+        if (prev + 1 >= threshold) {
+          // increment completedSessions immediately
+          setCompletedSessions(cs => ({
+            ...cs,
+            [currentSession.id]: (cs[currentSession.id] || 0) + 1
+          }));
+
+          completeSession(currentSession.id);  // marks complete and updates count
+
+          if (watchIntervalRef.current) {
+            clearInterval(watchIntervalRef.current); // stop timer
+            watchIntervalRef.current = null;
+          }
+          return -1; // special value to indicate completion
+        }
+        return prev + 1;
+      });
+  }, 1000);
+
+  return () => {
+    if (watchIntervalRef.current) {
+      clearInterval(watchIntervalRef.current);
+      watchIntervalRef.current = null;
+    }
+  };
+}, [currentSession]);
+
 
   if (currentSession) {
     return (
@@ -225,6 +314,8 @@ const WellnessModule = () => {
                   <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
                     <div className="text-2xl font-bold text-gray-800">{completedSessions[currentSession.id] || 0}</div>
                     <div className="text-sm text-gray-600">Times Completed</div>
+                    {/* change: show watched seconds */}
+                    <div className="text-xs text-gray-500 mt-2">Watched:  {watchSeconds === -1 ? 'Completed' : `Watched: ${watchSeconds}s`}</div>
                   </div>
                   
                   <div className="space-y-3">
@@ -355,78 +446,21 @@ const WellnessModule = () => {
               </div>
               
               <div className="p-6">
-                <div className="flex items-start justify-between mb-3">
+                <div className="flex justify-between items-center mb-2">
                   <h3 className="text-lg font-semibold text-gray-800">{program.title}</h3>
                   <div className="flex items-center space-x-1">
                     <Star className="w-4 h-4 text-yellow-500 fill-current" />
                     <span className="text-sm text-gray-600">{program.rating}</span>
                   </div>
                 </div>
-                
-                <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                  {program.description}
-                </p>
-                
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <div className="flex items-center space-x-1">
-                      <Clock className="w-4 h-4" />
-                      <span>{program.duration}</span>
-                    </div>
-                    <span className="px-2 py-1 bg-gray-100 rounded-full text-xs">
-                      {program.difficulty}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500">
-                    <p>By {program.instructor}</p>
-                    <p>Completed {completedSessions[program.id] || 0} times</p>
-                  </div>
-                  <button
-                    onClick={() => startSession(program)}
-                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-2 rounded-lg font-medium transition-all flex items-center space-x-2"
-                  >
-                    <Play className="w-4 h-4" />
-                    <span>Watch</span>
-                  </button>
+                <p className="text-sm text-gray-600 mb-3">{program.description}</p>
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>{program.duration}</span>
+                  <span>{program.difficulty}</span>
                 </div>
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Benefits Section */}
-        <div className="mt-16 bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-            Benefits of Regular Wellness Practice
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                title: "Reduced Stress",
-                description: "Lower cortisol levels and improved stress management",
-                icon: Heart
-              },
-              {
-                title: "Better Focus",
-                description: "Enhanced concentration and mental clarity",
-                icon: Brain
-              },
-              {
-                title: "Improved Sleep",
-                description: "Better sleep quality and faster sleep onset",
-                icon: CheckCircle
-              }
-            ].map((benefit, index) => (
-              <div key={index} className="text-center">
-                <benefit.icon className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">{benefit.title}</h3>
-                <p className="text-gray-600">{benefit.description}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </div>
