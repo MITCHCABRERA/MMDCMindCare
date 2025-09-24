@@ -10,9 +10,14 @@ import TherapyModule from './components/TherapyModule';
 import Consultation from './components/Consultation';
 //import DoctorLogin from './components/DoctorLogin';
 
+
 import DoctorPanel from './components/DoctorPanel';
 import StudentPortal from './components/StudentPortal';
 import { AuthProvider } from './components/auth/useAuth';
+import PrivacySettings from './components/PrivacySettings';
+import AccountSettings from './components/AccountSettings';
+
+
 
 function App() {
   return (
@@ -30,6 +35,8 @@ function App() {
           <Route path="/consultation" element={<Consultation />} />
           <Route path="/doctor-panel" element={<DoctorPanel />} />
           <Route path="/student-portal" element={<StudentPortal />} />
+          <Route path="/privacy-settings" element={<PrivacySettings />} />
+          <Route path="/account-settings" element={<AccountSettings />} />
         </Routes>
       </div>
     </Router>
