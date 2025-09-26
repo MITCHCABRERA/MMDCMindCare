@@ -37,7 +37,7 @@ const GoogleButton: React.FC = () => {
       className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl"
     >
       <FcGoogle className="text-xl bg-white rounded p-0.5" />
-      {isSigningIn ? "Signing In..." : "Sign in with MMCD Gmail"} <ArrowRight className="w-4 h-4" />
+      {isSigningIn ? "Signing In..." : "Sign in with MMDC Gmail"} <ArrowRight className="w-4 h-4" />
     </button>
   );
 };

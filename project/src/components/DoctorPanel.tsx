@@ -155,7 +155,7 @@ const DoctorPanel = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-800">Doctor Panel</h1>
-                <p className="text-xs text-gray-500">MMCD MindCare Professional</p>
+                <p className="text-xs text-gray-500">MMDC MindCare Professional</p>
               </div>
             </div>
             

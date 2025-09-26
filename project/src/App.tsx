@@ -35,7 +35,6 @@ function App() {
           <Route path="/consultation" element={<Consultation />} />
           <Route path="/doctor-panel" element={<DoctorPanel />} />
           <Route path="/student-portal" element={<StudentPortal />} />
-          <Route path="/privacy-settings" element={<PrivacySettings />} />
           <Route path="/account-settings" element={<AccountSettings />} />
         </Routes>
       </div>
