@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/dashboard/Dashboard';
-import WellnessModule from './components/WellnessModule';
+import WellnessModule from './components/Wellness/WellnessModule';
 import MoodTracker from './components/MoodTracker';
 import Journal from './components/Journal';
 import Chatbot from './components/Chatbot';
