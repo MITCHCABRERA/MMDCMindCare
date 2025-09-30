@@ -264,8 +264,9 @@ const StudentPortal = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">Emergency Hotline</h3>
-                  <p className="text-sm opacity-90">24/7 Crisis Line: 8-919-9999</p>
-                  <p className="text-sm opacity-90">Text: 0917-899-8727</p>
+                  <p className="text-sm opacity-90">Landline: (02) 8804-4673</p>
+                  <p className="text-sm opacity-90">Globe: 0917-558-4673</p>
+                  <p className="text-sm opacity-90">Smart: 0918-873-4673</p>
                 </div>
               </div>
             </div>
