@@ -28,17 +28,18 @@ import {
   X
 } from 'lucide-react';
 
+// In Dashboard.tsx
 const searchItems = [
-  "Wellness Tutorials",
-  "Digital Journal",
-  "AI Support Chat",
-  "Light & Sound Therapy",
-  "Book Consultation",
-  "Mood Tracker",
-  "Privacy Settings",
-  "Download Records",
-  "Account Settings",
-  "Student Portal",
+  { name: "Wellness Tutorials", route: "/wellness" },
+  { name: "Digital Journal", route: "/journal" },
+  { name: "AI Support Chat", route: "/chatbot" },
+  { name: "Light & Sound Therapy", route: "/therapy" },
+  { name: "Book Consultation", route: "/consultation" },
+  { name: "Mood Tracker", route: "/mood-tracker" },
+  { name: "Privacy Settings", route: "/privacy-settings" }, // Assuming a route for Privacy Settings
+  { name: "Download Records", route: "/download-records" }, // Assuming a route for Download Records
+  { name: "Account Settings", route: "/account-settings" },
+  { name: "Student Portal", route: "/student-portal" },
 ];
 
 const Dashboard: React.FC = () => {
@@ -58,19 +59,29 @@ const Dashboard: React.FC = () => {
 
   // Search logic
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    if (query.length > 0) {
-      const filtered = searchItems.filter(item =>
-        item.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredSuggestions(filtered);
-      setShowSuggestions(true);
-    } else {
-      setFilteredSuggestions([]);
-      setShowSuggestions(false);
-    }
-  };
+  const query = e.target.value;
+  setSearchQuery(query);
+  if (query.length > 0) {
+    const filtered = searchItems.filter(item =>
+      item.name.toLowerCase().includes(query.toLowerCase())
+    );
+    setFilteredSuggestions(filtered.map(item => item.name)); // Still pass names to SearchBar for display
+    setShowSuggestions(true);
+  } else {
+    setFilteredSuggestions([]);
+    setShowSuggestions(false);
+  }
+};
+
+    // Search Select
+const handleSearchSelect = (selectedItemName: string) => {
+  const selectedItem = searchItems.find(item => item.name === selectedItemName);
+  if (selectedItem && selectedItem.route) {
+    navigate(selectedItem.route);
+    setSearchQuery(''); // Clear search query after navigation
+    setShowSuggestions(false); // Hide suggestions
+  }
+};
 
   // Monthly reset logic
   useEffect(() => {
@@ -160,9 +171,10 @@ const Dashboard: React.FC = () => {
             <SearchBar
               searchQuery={searchQuery}
               handleSearchChange={handleSearchChange}
-              filteredSuggestions={filteredSuggestions}
+              filteredSuggestions={filteredSuggestions} // This will still be an array of strings (names)
               showSuggestions={showSuggestions}
               setShowSuggestions={setShowSuggestions}
+              onSearchSelect={handleSearchSelect} // New prop
             />
 
            {/* Right Buttons */}
