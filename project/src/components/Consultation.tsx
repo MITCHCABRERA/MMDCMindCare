@@ -111,8 +111,36 @@ const Consultation = () => {
 
   const timeSlots = [
     '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-    '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'
+    '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '10;30 PM'
   ];
+
+  // Helper function to check if a time slot is in the past
+  const isTimeSlotPast = (timeSlot) => {
+    if (!selectedDate) return false;
+    
+    const today = new Date();
+    const selected = new Date(selectedDate);
+    
+    if (selected.toDateString() !== today.toDateString()) {
+      return false;
+    }
+    
+    //check if the time has passed
+    const [time, period] = timeSlot.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    
+    //24-hour format
+    if (period === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+      hours = 0;
+    }
+    
+    const slotTime = new Date(selected);
+    slotTime.setHours(hours, minutes, 0, 0);
+    
+    return slotTime < today;
+  };
   const handleEmergencyCall = () => {
     // Find available doctor (first one for demo)
     const availableDoctor = counselors[0];
@@ -582,19 +610,25 @@ const Consultation = () => {
                     Select Time
                   </label>
                   <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto">
-                    {timeSlots.map((time) => (
-                      <button
-                        key={time}
-                        onClick={() => setSelectedTime(time)}
-                        className={`p-2 rounded-lg border transition-all text-sm ${
-                          selectedTime === time
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        {time}
-                      </button>
-                    ))}
+                    {timeSlots.map((time) => {
+                      const isPast = isTimeSlotPast(time);
+                      return (
+                        <button
+                          key={time}
+                          onClick={() => !isPast && setSelectedTime(time)}
+                          disabled={isPast}
+                          className={`p-2 rounded-lg border transition-all text-sm ${
+                            isPast
+                              ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : selectedTime === time
+                              ? 'border-blue-500 bg-blue-50 text-blue-700'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {time}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
