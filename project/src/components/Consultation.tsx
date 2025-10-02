@@ -7,8 +7,8 @@ import {
   Clock, 
   User,
   Video,
-  Phone,
-  MessageSquare,
+  PhoneCall,
+  MessagesSquare,
   Star,
   Shield,
   CheckCircle,
@@ -571,8 +571,8 @@ const Consultation = () => {
                   <div className="grid grid-cols-3 gap-2">
                     {[
                       { type: 'video', icon: Video, label: 'Video' },
-                      { type: 'phone', icon: Phone, label: 'Phone' },
-                      { type: 'chat', icon: MessageSquare, label: 'Chat' }
+                      { type: 'phone', icon: PhoneCall, label: 'Phone' },
+                      { type: 'chat', icon: MessagesSquare, label: 'Chat' }
                     ].map((option) => (
                       <button
                         key={option.type}

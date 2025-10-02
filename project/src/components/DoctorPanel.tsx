@@ -12,6 +12,7 @@ import {
   Video,
   Phone,
   Users,
+  MessagesSquare,
   BarChart3,
   Settings,
   LogOut,
@@ -19,6 +20,13 @@ import {
   Send,
   Plus
 } from 'lucide-react';
+
+const ICON_MAP: Record<string, React.ComponentType<any>> = {
+  video: Video,
+  phone: Phone,
+  chat: MessagesSquare,
+};
+
 
 const DoctorPanel = () => {
   const navigate = useNavigate();
@@ -281,7 +289,6 @@ const DoctorPanel = () => {
               )}
             </div>
           </div>
-
           {/* Main Content */}
           <div className="lg:col-span-3">
             {activeTab === 'bookings' && (
@@ -320,7 +327,10 @@ const DoctorPanel = () => {
                                 <span>{booking.time}</span>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <Video className="w-4 h-4" />
+                                {(() => {
+                                  const Icon = ICON_MAP[booking.type as keyof typeof ICON_MAP] || Video; 
+                                  return <Icon className="w-4 h-4" />;
+                                })()}
                                 <span>{booking.type}</span>
                               </div>
                               <div className="flex items-center space-x-2">
