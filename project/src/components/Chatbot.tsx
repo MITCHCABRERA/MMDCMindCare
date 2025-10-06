@@ -104,6 +104,36 @@ const Chatbot = () => {
     }
   };
 
+  //API bridge
+  const getBotResponseFromAPI = async (userMessage) => {
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    const response = await fetch(`${apiUrl}/api/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: userMessage
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return {
+      content: data.reply,
+      mood: 'supportive',
+      suggestions: null
+    };
+  } catch (error) {
+    console.error('Something went wrong, falling back to pre-set responses:', error);
+    return null;
+  }
+};
+
   const handleSendMessage = async (messageText = inputMessage) => {
     if (!messageText.trim()) return;
 
@@ -118,9 +148,19 @@ const Chatbot = () => {
     setInputMessage('');
     setIsTyping(true);
 
-    // Simulate AI processing time
-    setTimeout(() => {
-      const botResponse = generateBotResponse(messageText);
+    try {
+      //API Response firt.
+      const apiResponse = await getBotResponseFromAPI(messageText);
+      
+      let botResponse;
+      if (apiResponse) {
+        //API response if success
+        botResponse = apiResponse;
+      } else {
+        //Rule-based safety net if API fails
+        botResponse = generateBotResponse(messageText);
+      }
+
       const botMessage = {
         id: Date.now() + 1,
         type: 'bot',
@@ -131,8 +171,22 @@ const Chatbot = () => {
       };
 
       setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Error handling message:', error);
+
+      //Previous function. Now acts as fallback if API fails
+      const fallbackMessage = {
+        id: Date.now() + 1,
+        type: 'bot',
+        content: "I'm sorry, I'm having trouble processing your message right now. Could you try rephrasing or ask me something else? I'm here to help!",
+        timestamp: new Date(),
+        mood: 'supportive',
+        suggestions: ["I'm feeling stressed", "Tell me about your features", "Help me with breathing"]
+      };
+      setMessages(prev => [...prev, fallbackMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleKeyPress = (e) => {
