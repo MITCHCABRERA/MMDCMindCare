@@ -51,6 +51,7 @@ const DoctorPanel = () => {
     loadBookings();
     loadNotifications();
     loadChatNotifications();
+    cleanupExpiredChats();
   }, [navigate]);
 
   const loadBookings = () => {
@@ -69,6 +70,32 @@ const DoctorPanel = () => {
     setChatNotifications(savedChatNotifications);
   };
 
+  const cleanupExpiredChats = () => {
+    const now = new Date().getTime();
+    const twentyFourHours = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    
+    // Get all chat messages
+    const allChatMessages = JSON.parse(localStorage.getItem('chat-messages') || '{}');
+    const updatedChatMessages = {};
+    
+    // Filter out expired conversations
+    Object.keys(allChatMessages).forEach(chatId => {
+      const messages = allChatMessages[chatId];
+      if (messages && messages.length > 0) {
+        // Check if the last message is within 24 hours
+        const lastMessage = messages[messages.length - 1];
+        const messageTime = new Date(lastMessage.timestamp).getTime();
+        
+        if (now - messageTime < twentyFourHours) {
+          updatedChatMessages[chatId] = messages;
+        }
+      }
+    });
+    
+    // Update localStorage with filtered messages
+    localStorage.setItem('chat-messages', JSON.stringify(updatedChatMessages));
+    setChatMessages(updatedChatMessages);
+  };
   const confirmBooking = (bookingId) => {
     const updatedBookings = bookings.map(booking => {
       if (booking.id === bookingId) {
@@ -81,8 +108,30 @@ const DoctorPanel = () => {
     setBookings(updatedBookings);
     localStorage.setItem('consultation-bookings', JSON.stringify(updatedBookings));
     
-    // Add notification for student
+    // Add confirmed booking to chat messages with welcome message
     const booking = bookings.find(b => b.id === bookingId);
+    if (booking) {
+      const welcomeMessage = {
+        id: Date.now(),
+        sender: 'doctor',
+        message: `Hello ${booking.studentName}! Your consultation has been confirmed. How can I help you today?`,
+        timestamp: new Date().toISOString()
+      };
+
+      const updatedChatMessages = {
+        ...chatMessages,
+        [bookingId]: [welcomeMessage]
+      };
+      setChatMessages(updatedChatMessages);
+      localStorage.setItem('chat-messages', JSON.stringify(updatedChatMessages));
+      
+      // Set cleanup timer for this conversation (24 hours)
+      setTimeout(() => {
+        cleanupExpiredChats();
+      }, 24 * 60 * 60 * 1000);
+    }
+    
+    // Add notification for student
     const studentNotification = {
       id: Date.now(),
       type: 'booking_confirmed',
@@ -128,6 +177,11 @@ const DoctorPanel = () => {
     setChatMessages(updatedMessages);
     localStorage.setItem('chat-messages', JSON.stringify(updatedMessages));
     setChatMessage('');
+    
+    // Set cleanup timer for this conversation (24 hours from last message)
+    setTimeout(() => {
+      cleanupExpiredChats();
+    }, 24 * 60 * 60 * 1000);
   };
 
   const { logout } = useAuth();
@@ -163,7 +217,7 @@ const DoctorPanel = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-800">Doctor Panel</h1>
-                <p className="text-xs text-gray-500">MMDC MindCare Professional</p>
+                <p className="text-xs text-gray-500">MMCD MindCare Professional</p>
               </div>
             </div>
             
@@ -289,6 +343,7 @@ const DoctorPanel = () => {
               )}
             </div>
           </div>
+
           {/* Main Content */}
           <div className="lg:col-span-3">
             {activeTab === 'bookings' && (
@@ -328,7 +383,7 @@ const DoctorPanel = () => {
                               </div>
                               <div className="flex items-center space-x-2">
                                 {(() => {
-                                  const Icon = ICON_MAP[booking.type as keyof typeof ICON_MAP] || Video; 
+                                  const Icon = ICON_MAP[booking.type] || Video;
                                   return <Icon className="w-4 h-4" />;
                                 })()}
                                 <span>{booking.type}</span>
@@ -372,7 +427,28 @@ const DoctorPanel = () => {
                           )}
                           
                           <button
-                            onClick={() => setSelectedBooking(booking)}
+                            onClick={() => {
+                              // Initialize chat if it doesn't exist
+                              if (!chatMessages[booking.id]) {
+                                const welcomeMessage = {
+                                  id: Date.now(),
+                                  sender: 'doctor',
+                                  message: `Hello ${booking.studentName}! I'm ready to chat with you about your consultation.`,
+                                  timestamp: new Date().toISOString()
+                                };
+
+                                const updatedChatMessages = {
+                                  ...chatMessages,
+                                  [booking.id]: [welcomeMessage]
+                                };
+                                setChatMessages(updatedChatMessages);
+                                localStorage.setItem('chat-messages', JSON.stringify(updatedChatMessages));
+                              }
+                              
+                              // Set as selected booking and switch to chat tab
+                              setSelectedBooking(booking);
+                              setActiveTab('chat');
+                            }}
                             className="ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
                           >
                             <MessageCircle className="w-4 h-4" />
@@ -394,6 +470,11 @@ const DoctorPanel = () => {
                   {/* Chat List */}
                   <div className="lg:col-span-1">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Active Chats</h3>
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-xs text-blue-700">
+                        💡 Conversations are automatically saved and will be removed after 24 hours of inactivity.
+                      </p>
+                    </div>
                     <div className="space-y-2 max-h-96 overflow-y-auto">
                       {Object.keys(chatMessages).length === 0 ? (
                         <p className="text-gray-500 text-sm">No active chats</p>
@@ -401,6 +482,8 @@ const DoctorPanel = () => {
                         Object.keys(chatMessages).map((chatId) => {
                           const messages = chatMessages[chatId] || [];
                           const lastMessage = messages[messages.length - 1];
+                          const messageAge = lastMessage ? 
+                            Math.floor((new Date().getTime() - new Date(lastMessage.timestamp).getTime()) / (1000 * 60 * 60)) : 0;
                           const chatInfo = bookings.find(b => b.id.toString() === chatId) || {
                             studentName: `Student ${chatId}`,
                             studentEmail: 'student@mmdc.edu.ph'
@@ -424,6 +507,9 @@ const DoctorPanel = () => {
                                   </span>
                                 )}
                               </div>
+                                  <div className="text-xs text-gray-400">
+                                    {messageAge < 1 ? 'Active' : `${messageAge}h ago`}
+                                  </div>
                               {lastMessage && (
                                 <p className="text-xs text-gray-600 truncate">
                                   {lastMessage.sender === 'doctor' ? 'You: ' : ''}{lastMessage.message}
@@ -691,10 +777,9 @@ const DoctorPanel = () => {
                     </div>
                   </div>
                   
-                  <div className="pt-6">
-                    <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                      Save Changes
-                    </button>
+                    <div className="bg-gray-50 rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Session Types</h3>
+                    <p className="text-gray-500 text-sm">Coming soon...</p>
                   </div>
                 </div>
               </div>
