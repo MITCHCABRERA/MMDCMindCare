@@ -38,6 +38,34 @@ const Consultation = () => {
   const [showEmergencySupport, setShowEmergencySupport] = useState(false);
   
 
+const cleanupExpiredChats = () => {
+    const now = new Date().getTime();
+    const twentyFourHours = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    
+    // Get all chat messages
+    const allChatMessages = JSON.parse(localStorage.getItem('chat-messages') || '{}');
+    const updatedChatMessages = {};
+    
+    // Filter out expired conversations
+    Object.keys(allChatMessages).forEach(chatId => {
+      const messages = allChatMessages[chatId];
+      if (messages && messages.length > 0) {
+        // Check if the last message is within 24 hours
+        const lastMessage = messages[messages.length - 1];
+        const messageTime = new Date(lastMessage.timestamp).getTime();
+        
+        if (now - messageTime < twentyFourHours) {
+          updatedChatMessages[chatId] = messages;
+        }
+      }
+    });
+    
+    // Update localStorage with filtered messages
+    localStorage.setItem('chat-messages', JSON.stringify(updatedChatMessages));
+    setChatMessages(updatedChatMessages);
+  };
+  
+
   const counselors = [
     {
       id: 1,
@@ -105,6 +133,9 @@ const Consultation = () => {
     // Load chat messages
     const savedChatMessages = JSON.parse(localStorage.getItem('chat-messages') || '{}');
     setChatMessages(savedChatMessages);
+
+  // Clean up expired chats
+    cleanupExpiredChats();
   }, []);
 
   const specialties = ['all', 'Anxiety', 'Depression', 'Student Stress', 'Trauma Therapy', 'Family Therapy', 'Medication Management'];
@@ -489,10 +520,51 @@ const Consultation = () => {
                 <MessageCircle className="w-5 h-5 mr-2 text-purple-600" />
                 Chat with Doctor
               </h3>
-              {JSON.parse(localStorage.getItem('consultation-bookings') || '[]').filter(b => b.status === 'confirmed').length > 0 ? (
+              {(() => {
+                const confirmedBookings = JSON.parse(localStorage.getItem('consultation-bookings') || '[]')
+                  .filter(b => b.status === 'confirmed');
+                
+                // Filter bookings to only show those with recent chat activity (within 24 hours)
+                const recentChatBookings = confirmedBookings.filter(booking => {
+                  const bookingChatMessages = chatMessages[booking.id];
+                  if (!bookingChatMessages || bookingChatMessages.length === 0) {
+                    return false; // No chat messages, don't show
+                  }
+                  
+                  // Check if the last message is within 24 hours
+                  const lastMessage = bookingChatMessages[bookingChatMessages.length - 1];
+                  const lastMessageTime = new Date(lastMessage.timestamp).getTime();
+                  const now = new Date().getTime();
+                  const twentyFourHours = 24 * 60 * 60 * 1000;
+                  
+                  return (now - lastMessageTime) < twentyFourHours;
+                });
+                
+                return recentChatBookings.length > 0;
+              })() ? (
                 <div className="space-y-3">
-                  {JSON.parse(localStorage.getItem('consultation-bookings') || '[]')
-                    .filter(b => b.status === 'confirmed')
+                  {(() => {
+                    const confirmedBookings = JSON.parse(localStorage.getItem('consultation-bookings') || '[]')
+                      .filter(b => b.status === 'confirmed');
+                    
+                    // Filter bookings to only show those with recent chat activity (within 24 hours)
+                    const recentChatBookings = confirmedBookings.filter(booking => {
+                      const bookingChatMessages = chatMessages[booking.id];
+                      if (!bookingChatMessages || bookingChatMessages.length === 0) {
+                        return false; // No chat messages, don't show
+                      }
+                      
+                      // Check if the last message is within 24 hours
+                      const lastMessage = bookingChatMessages[bookingChatMessages.length - 1];
+                      const lastMessageTime = new Date(lastMessage.timestamp).getTime();
+                      const now = new Date().getTime();
+                      const twentyFourHours = 24 * 60 * 60 * 1000;
+                      
+                      return (now - lastMessageTime) < twentyFourHours;
+                    });
+                    
+                    return recentChatBookings;
+                  })()
                     .map((appointment) => (
                     <button
                       key={appointment.id}
@@ -505,7 +577,24 @@ const Consultation = () => {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-medium text-gray-800 text-sm">{appointment.counselor}</p>
-                          <p className="text-xs text-gray-500">Click to chat</p>
+                          <p className="text-xs text-gray-500">
+                            {(() => {
+                              const bookingChatMessages = chatMessages[appointment.id];
+                              if (bookingChatMessages && bookingChatMessages.length > 0) {
+                                const lastMessage = bookingChatMessages[bookingChatMessages.length - 1];
+                                const lastMessageTime = new Date(lastMessage.timestamp).getTime();
+                                const now = new Date().getTime();
+                                const hoursAgo = Math.floor((now - lastMessageTime) / (1000 * 60 * 60));
+                                
+                                if (hoursAgo < 1) {
+                                  return 'Active now';
+                                } else {
+                                  return `${hoursAgo}h ago`;
+                                }
+                              }
+                              return 'Click to chat';
+                            })()}
+                          </p>
                         </div>
                         <MessageCircle className="w-4 h-4 text-gray-400" />
                       </div>
@@ -513,7 +602,10 @@ const Consultation = () => {
                     ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm">Book a session to start chatting with your doctor</p>
+                <div className="text-center py-4">
+                  <p className="text-gray-500 text-sm mb-2">No recent conversations</p>
+                  <p className="text-xs text-gray-400">Conversations are available for 24 hours after the last message</p>
+                </div>
               )}
             </div>
 
