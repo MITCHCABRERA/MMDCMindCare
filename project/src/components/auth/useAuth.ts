@@ -4,7 +4,7 @@ export interface User {
   email: string;
   name: string;
   password?: string; 
-  role?: "student" | "doctor";
+  role?: "student" | "doctor" | "admin";
 }
 
 export interface AuthContextType {
