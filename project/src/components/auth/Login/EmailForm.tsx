@@ -13,28 +13,36 @@ const EmailForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const handleEmailLogin = async () => {
-  setIsSigningIn(true);
-  setError(null);
-  try {
-    const user = await loginWithEmail(email, password);
-    login(user); // update global auth state
+    setIsSigningIn(true);
+    setError(null);
 
-    // Redirect based on role
-    if (user.role === "doctor") {
-    navigate("/doctor-panel");
-  } else if (user.role === "student") {
-    navigate("/dashboard");
-  } else {
-    console.warn("⚠️ Login fallback triggered: role not defined", user);
-    navigate("/dashboard", { state: { fallback: true } });
-  }
-  } catch (err) {
-    setError("Invalid credentials");
-    console.error(err);
-  } finally {
-    setIsSigningIn(false);
-  }
-};
+    try {
+      const user = await loginWithEmail(email, password);
+      login(user); // update global auth state
+
+      // ✅ Save user to localStorage before redirecting
+      localStorage.setItem("authUser", JSON.stringify(user));
+
+      // ✅ Role-based redirect
+      if (user.role === "admin") {
+        console.log("✅ Logged in as admin, redirecting...");
+        navigate("/admin-panel", { replace: true });
+      } else if (user.role === "doctor") {
+        navigate("/doctor-panel", { replace: true });
+      } else if (user.role === "student") {
+        navigate("/dashboard", { replace: true });
+      } else {
+        console.warn("⚠️ Login fallback triggered: role not defined", user);
+        navigate("/dashboard", { state: { fallback: true }, replace: true });
+      }
+
+    } catch (err) {
+      setError("Invalid credentials");
+      console.error(err);
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
 
   return (
     <div className="space-y-5">
