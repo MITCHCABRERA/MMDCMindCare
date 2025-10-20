@@ -1,75 +1,45 @@
 import React, { useState } from "react";
+import { FcGoogle } from "react-icons/fc";
 import { ArrowRight } from "lucide-react";
 import { useAuth } from "../useAuth";
-import { loginWithEmail } from "../authAPI";
+import { loginWithGoogle } from "../authAPI";
 import { useNavigate } from "react-router-dom";
 
-const EmailForm: React.FC = () => {
+const GoogleButton: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleEmailLogin = async () => {
+  const handleGoogleLogin = async () => {
     setIsSigningIn(true);
     setError(null);
-
     try {
-      const user = await loginWithEmail(email, password);
-      login(user); // update global auth state
-
-      // ✅ Save user to localStorage before redirecting
+      const user = await loginWithGoogle();
+      login(user);
       localStorage.setItem("authUser", JSON.stringify(user));
-
-      // ✅ Role-based redirect
-      if (user.role === "admin") {
-        console.log("✅ Logged in as admin, redirecting...");
-        navigate("/admin-panel", { replace: true });
-      } else if (user.role === "doctor") {
-        navigate("/doctor-panel", { replace: true });
-      } else if (user.role === "student") {
-        navigate("/dashboard", { replace: true });
-      } else {
-        console.warn("⚠️ Login fallback triggered: role not defined", user);
-        navigate("/dashboard", { state: { fallback: true }, replace: true });
-      }
-
-    } catch (err) {
-      setError("Invalid credentials");
-      console.error(err);
+      navigate("/dashboard", { replace: true });
+    } catch (err: any) {
+      console.error("Google login failed:", err);
+      setError(err.message || "Google login failed");
     } finally {
       setIsSigningIn(false);
     }
   };
 
   return (
-    <div className="space-y-5">
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-        className="w-full px-4 py-3 border rounded-xl"
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
-        className="w-full px-4 py-3 border rounded-xl"
-      />
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+    <div className="w-full">
       <button
-        onClick={handleEmailLogin}
+        onClick={handleGoogleLogin}
         disabled={isSigningIn}
-        className="w-full flex justify-center items-center gap-2 py-3 bg-gray-100 rounded-xl"
+        className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl shadow-lg hover:opacity-90 transition"
       >
-        {isSigningIn ? "Signing In..." : "Sign in"} <ArrowRight />
+        <FcGoogle className="text-xl bg-white rounded p-0.5" />
+        {isSigningIn ? "Signing In..." : "Login with MMDC Gmail"} <ArrowRight className="w-4 h-4" />
       </button>
+      {error && <p className="text-red-500 text-sm mt-3 text-center">{error}</p>}
     </div>
   );
 };
 
-export default EmailForm;
+export default GoogleButton;
