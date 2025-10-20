@@ -51,52 +51,38 @@ useEffect(() => {
       systemHealth: 98.5
     });
 
-    // Load real users data from system
-    const realUsers = [
-      {
-        id: 1,
-        name: 'Maria Santos',
-        email: 'maria.santos@mmdc.edu.ph',
-        studentId: '2024-001234',
-        program: 'BS Nursing',
-        year: '3rd Year',
-        status: 'active',
-        lastLogin: new Date().toISOString().slice(0, 16).replace('T', ' '),
-        joinDate: '2022-08-15',
-        sessionsCompleted: wellnessSessions,
-        journalEntries: journalEntries.length,
-        moodEntries: moodEntries.length
-      },
-      {
-        id: 2,
-        name: 'John Rivera',
-        email: 'john.rivera@mmdc.edu.ph',
-        studentId: '2024-001235',
-        program: 'BS Medicine',
-        year: '2nd Year',
-        status: 'active',
-        lastLogin: '2024-01-14 09:15',
-        joinDate: '2023-08-15',
-        sessionsCompleted: Math.floor(wellnessSessions * 0.6),
-        journalEntries: Math.floor(journalEntries.length * 0.4),
-        moodEntries: Math.floor(moodEntries.length * 0.7)
-      },
-      {
-        id: 3,
-        name: 'Sarah Chen',
-        email: 'sarah.chen@mmdc.edu.ph',
-        studentId: '2024-001236',
-        program: 'BS Physical Therapy',
-        year: '4th Year',
-        status: journalEntries.length > 10 ? 'active' : 'inactive',
-        lastLogin: '2024-01-10 16:45',
-        joinDate: '2021-08-15',
-        sessionsCompleted: Math.floor(wellnessSessions * 1.5),
-        journalEntries: Math.floor(journalEntries.length * 1.2),
-        moodEntries: Math.floor(moodEntries.length * 1.8)
-      }
-    ];
-    setUsers(realUsers);
+    
+   // ✅ Load only new Google users from localStorage
+const googleUsers = JSON.parse(localStorage.getItem("registered-users") || "[]");
+
+const sessionsData = JSON.parse(localStorage.getItem('sessions-completed') || '[]');
+const journalData = JSON.parse(localStorage.getItem('journal-entries') || '[]');
+const moodData = JSON.parse(localStorage.getItem('mood-entries') || '[]');
+
+const formattedGoogleUsers = googleUsers.map((u, index) => {
+  // Count entries for this specific user by email
+  const userSessions = sessionsData.filter(s => s.email === u.email).length;
+  const userJournals = journalData.filter(j => j.email === u.email).length;
+  const userMoods = moodData.filter(m => m.email === u.email).length;
+
+  return {
+    id: 100 + index,
+    name: u.name,
+    email: u.email,
+    studentId: `G-${index + 1}`,
+    program: "BSIT",
+    year: "#3rd Year",
+    status: "active",
+    lastLogin: new Date().toISOString().slice(0, 16).replace('T', ' '),
+    joinDate: new Date().toISOString().split('T')[0],
+    sessionsCompleted: userSessions,
+    journalEntries: userJournals,
+    moodEntries: userMoods,
+  };
+});
+
+setUsers(formattedGoogleUsers);
+
 
     // Load consultations
     setConsultations(consultationBookings);
