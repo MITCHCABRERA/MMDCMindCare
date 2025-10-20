@@ -5,7 +5,6 @@ export interface User {
   name: string;
   password?: string; 
   role?: "student" | "doctor" | "admin";
-  photoURL?: string; // ✅ add this
 }
 
 export interface AuthContextType {
