@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from "./auth/useAuth";
 import { 
   ArrowLeft, 
   User, 
@@ -9,41 +10,44 @@ import {
   MessageCircle,
   Download,
   Settings,
-  Shield,
-  Bell,
   Award,
   TrendingUp,
   Clock,
-  Plus,
-  X,
   CheckCircle
 } from 'lucide-react';
 
 const StudentPortal = () => {
   const navigate = useNavigate();
-  const [studentData, setStudentData] = useState({});
-  const [sessionStats, setSessionStats] = useState({});
-  const [recentActivity, setRecentActivity] = useState([]);
+  const { user } = useAuth();
+  const [studentData, setStudentData] = useState<any>(null);
+  const [sessionStats, setSessionStats] = useState<any>({});
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
   useEffect(() => {
-    loadStudentData();
-    loadSessionStats();
-    loadRecentActivity();
-  }, []);
+    if (user) {
+      loadStudentData();
+      loadSessionStats();
+      loadRecentActivity();
+    }
+  }, [user]); 
 
   const loadStudentData = () => {
-    // Mock student data - in real app, this would come from authentication
-    const mockData = {
-      name: "Maria Santos",
-      studentId: "2024-001234",
-      email: "maria.santos@mmdc.edu.ph",
-      program: "Bachelor of Science in Nursing",
+    if (!user) return; //  prevents crash if user not yet loaded
+
+    const data = {
+      name: user.name || "Student User",
+      email: user.email || "",
+      studentId: "N/A",
+      program: "BSIT",
       year: "3rd Year",
-      joinDate: "August 2022",
-      avatar: "https://images.pexels.com/photos/3762800/pexels-photo-3762800.jpeg?auto=compress&cs=tinysrgb&w=400"
+      joinDate: new Date().toLocaleDateString(),
+      avatar: user.photoURL || "https://cdn-icons-png.flaticon.com/512/847/847969.png", // fallback
     };
-    setStudentData(mockData);
+
+    setStudentData(data);
   };
+
+
 
   const loadSessionStats = () => {
     const wellnessCompleted = Object.keys(JSON.parse(localStorage.getItem('wellness-completed-sessions') || '{}')).length;
@@ -118,18 +122,24 @@ const StudentPortal = () => {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
               <div className="text-center">
-                <img
-                  src={studentData.avatar}
-                  alt={studentData.name}
-                  className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
-                />
-                <h2 className="text-xl font-bold text-gray-800 mb-1">{studentData.name}</h2>
-                <p className="text-gray-600 mb-2">{studentData.studentId}</p>
-                <p className="text-sm text-gray-500 mb-4">{studentData.program}</p>
-                <div className="bg-blue-50 rounded-lg p-3">
-                  <p className="text-sm text-blue-800 font-medium">{studentData.year}</p>
-                  <p className="text-xs text-blue-600">Joined {studentData.joinDate}</p>
-                </div>
+                {studentData ? (
+                  <>
+                    <img
+                      src={studentData.avatar}
+                      alt={studentData.name}
+                      className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
+                    />
+                    <h2 className="text-xl font-bold text-gray-800 mb-1">{studentData.name}</h2>
+                    <p className="text-gray-600 mb-2">{studentData.email}</p>
+                    <p className="text-sm text-gray-500 mb-4">{studentData.program}</p>
+                    <div className="bg-blue-50 rounded-lg p-3">
+                      <p className="text-sm text-blue-800 font-medium">{studentData.year}</p>
+                      <p className="text-xs text-blue-600">Joined {studentData.joinDate}</p>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-gray-500">Loading student info...</p>
+                )}
               </div>
             </div>
 
@@ -278,3 +288,7 @@ const StudentPortal = () => {
 };
 
 export default StudentPortal;
+function setStudentData(data: { name: string; email: string; studentId: string; program: string; year: string; joinDate: string; avatar: string; }) {
+  throw new Error('Function not implemented.');
+}
+
