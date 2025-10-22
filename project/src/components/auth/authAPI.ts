@@ -1,8 +1,7 @@
-import type { User } from "./useAuth"; 
+import type { User } from "./useAuth";
 import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "../../firebaseConfig"; 
+import { auth, googleProvider } from "../../firebaseConfig";
 
-// Mock accounts for Doctor and Admin
 const testDoctor: User = {
   email: "clear@gmail.com",
   password: "password123",
@@ -17,34 +16,43 @@ const testAdmin: User = {
   role: "admin",
 };
 
-// Email login (mock for Doctor and Admin)
-export const loginWithEmail = async (
-  email: string,
-  password: string
-): Promise<User> => {
+export const loginWithEmail = async (email: string, password: string): Promise<User> => {
   if (email === testDoctor.email && password === testDoctor.password) {
-    return { email: testDoctor.email, name: testDoctor.name, role: "doctor" };
+    return {
+      email: testDoctor.email,
+      name: testDoctor.name,
+      role: "doctor"
+    };
   }
+
   if (email === testAdmin.email && password === testAdmin.password) {
-    return { email: testAdmin.email, name: testAdmin.name, role: "admin" };
+    return {
+      email: testAdmin.email,
+      name: testAdmin.name,
+      role: "admin"
+    };
   }
+
   throw new Error("Invalid email or password");
 };
 
-// Google login using Firebase (any Google account)
 export const loginWithGoogle = async (): Promise<User> => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
-    const googleUser = result.user;
+    const user = result.user;
+
+    if (!user.email?.endsWith("@mmdc.mcl.edu.ph")) {
+      throw new Error("Only MMDC Gmail accounts are allowed");
+    }
 
     return {
-      email: googleUser.email || "",
-      name: googleUser.displayName || "Google User",
-      role: "student", // Default role for Google logins
-      photoURL: googleUser.photoURL || "",
+      email: user.email || "",
+      name: user.displayName || "",
+      role: "student",
+      photoURL: user.photoURL || "", // Added for avatar support
     };
-  } catch (error: any) {
-    console.error("Google Sign-In Error:", error.code, error.message);
-    throw new Error("Google sign-in failed. Please try again.");
+  } catch (error) {
+    console.error("Google sign-in error:", error);
+    throw error;
   }
 };
