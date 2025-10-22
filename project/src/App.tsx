@@ -14,7 +14,7 @@ import Consultation from './components/Consultation';
 import DoctorPanel from './components/DoctorPanel';
 import StudentPortal from './components/StudentPortal';
 import { AuthProvider } from './components/auth/useAuth';
-import PrivacySettings from './components/PrivacySettings';
+import AdminPanel from './components/AdminPanel';
 import AccountSettings from './components/AccountSettings';
 
 
@@ -36,6 +36,7 @@ function App() {
           <Route path="/doctor-panel" element={<DoctorPanel />} />
           <Route path="/student-portal" element={<StudentPortal />} />
           <Route path="/account-settings" element={<AccountSettings />} />
+          <Route path="/admin-panel" element={<AdminPanel />} />
         </Routes>
       </div>
     </Router>
