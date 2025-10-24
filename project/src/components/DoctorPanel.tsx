@@ -99,7 +99,7 @@ const DoctorPanel = () => {
   const confirmBooking = (bookingId) => {
     const updatedBookings = bookings.map(booking => {
       if (booking.id === bookingId) {
-        const meetLink = `https://meet.google.com/abc-defg-hij`;
+        const meetLink = `https://meet.google.com/cfb-mika-dkq`;
         return { ...booking, status: 'confirmed', meetLink };
       }
       return booking;
@@ -137,7 +137,7 @@ const DoctorPanel = () => {
       type: 'booking_confirmed',
       title: 'Session Confirmed',
       message: `Your session with ${booking.counselor} on ${booking.date} at ${booking.time} has been confirmed.`,
-      meetLink: `https://meet.google.com/abc-defg-hij`,
+      meetLink: `https://meet.google.com/cfb-mika-dkq`,
       timestamp: new Date().toISOString(),
       read: false
     };
