@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from "./auth/useAuth";
 import EmergencySupport from './dashboard/EmergencySupport';
 import { 
   ArrowLeft, 
@@ -222,18 +223,20 @@ const cleanupExpiredChats = () => {
     return matchesSearch && matchesSpecialty;
   });
 
+   const { user } = useAuth();
+
   const handleBooking = () => {
     if (selectedCounselor && selectedDate && selectedTime) {
       const newBooking = {
         id: Date.now(),
-        studentName: "Maria Santos", // In real app, get from auth
-        studentEmail: "maria.santos@mmdc.edu.ph",
+        studentName: user?.name || "Anonymous User",
+        studentEmail: user?.email || "no-email@mmdc.edu.ph",
         counselor: selectedCounselor.name,
         date: selectedDate,
         time: selectedTime,
         type: consultationType,
-        status: 'pending',
-        timestamp: new Date().toISOString()
+        status: "pending",
+        timestamp: new Date().toISOString(),
       };
 
       // Save booking
