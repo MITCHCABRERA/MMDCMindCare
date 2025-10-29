@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import EmailForm from "./EmailForm";
 import GoogleButton from "./GoogleButton";
-import { Brain, X, CheckCircle } from "lucide-react";
+import { Brain, X, CheckCircle, UserCog, ArrowLeft } from "lucide-react";
 
 interface LoginProps {
   onClose?: () => void;
@@ -9,6 +9,8 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onClose, isModal = false }) => {
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+
   const containerClasses = isModal
     ? "w-full max-w-md mx-auto"
     : "flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50";
@@ -44,13 +46,43 @@ const Login: React.FC<LoginProps> = ({ onClose, isModal = false }) => {
         {/* Welcome */}
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome Back</h2>
-          <p className="text-gray-600">Sign in to access your mental health dashboard</p>
+          <p className="text-gray-600">
+            {showAdminLogin
+              ? "Sign in as Admin or Doctor using your credentials"
+              : "Sign in to access your mental health dashboard"}
+          </p>
         </div>
 
-        {/* Auth options */}
-        <GoogleButton />
-        <div className="my-8 text-center text-gray-500 font-medium">OR</div>
-        <EmailForm />
+        {/* Conditional Auth Options */}
+        {!showAdminLogin ? (
+          <>
+            <GoogleButton />
+
+          {/* Increased top margin for more space */}
+          <div className="my-6 text-center mt-12">
+            <button
+              onClick={() => setShowAdminLogin(true)}
+              className="flex items-center justify-center gap-2 text-purple-600 font-medium hover:text-purple-800 transition duration-200 mx-auto"
+            >
+              <UserCog className="w-4 h-4" />
+              Login as Admin or Doctor
+            </button>
+          </div>
+          </>
+        ) : (
+          <>
+            {/* Back Button */}
+            <button
+              onClick={() => setShowAdminLogin(false)}
+              className="flex items-center text-gray-600 mb-4 hover:text-gray-800 transition"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" /> Back to MMDC Login
+            </button>
+
+            {/* Admin/Doctor Login Fields */}
+            <EmailForm />
+          </>
+        )}
 
         {/* Security notice */}
         <div className="mt-8 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border border-green-100 flex items-start space-x-3">
