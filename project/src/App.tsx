@@ -17,7 +17,7 @@ import { AuthProvider } from './components/auth/useAuth';
 import AdminPanel from './components/AdminPanel';
 import AccountSettings from './components/AccountSettings';
 
-
+import PHQ9Test from "./components/PHQ9Test";
 
 function App() {
   return (
@@ -37,6 +37,8 @@ function App() {
           <Route path="/student-portal" element={<StudentPortal />} />
           <Route path="/account-settings" element={<AccountSettings />} />
           <Route path="/admin-panel" element={<AdminPanel />} />
+          
+          <Route path="/phq9test" element={<PHQ9Test />} />
         </Routes>
       </div>
     </Router>
