@@ -164,4 +164,4 @@ Developed as part of **Capstone 1 & Capstone 2** at **Mapúa Malayan Digital Col
 
 ## 📎 Project Links
 
-- 📄 **Documentation:** https://mmdcmindcare-26a53.web.app/  
+- **Demo:** https://mmdcmindcare-26a53.web.app/  
